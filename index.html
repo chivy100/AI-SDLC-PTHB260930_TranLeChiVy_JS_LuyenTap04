@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ứng dụng trắc nghiệm JavaScript trực tuyến dành cho Câu lạc bộ Lập trình với tính năng bấm giờ, chấm điểm tự động và bảng xếp hạng.">
+  <title>JS Quiz Master - CLB Lập Trình</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-background-decor" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header chung -->
+    <header class="app-header">
+      <div class="brand-badge">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-text">CLB Lập Trình • JS Club Quiz</span>
+      </div>
+      <h1 class="app-title">Thử Thách Trắc Nghiệm JavaScript</h1>
+      <p class="app-subtitle">Rèn luyện tư duy lập trình qua các chủ đề: Biến, Mảng, Hàm và DOM</p>
+    </header>
+
+    <!-- 1. MÀN HÌNH BẮT ĐẦU -->
+    <section id="screen-start" class="screen-view active" aria-labelledby="start-heading">
+      <h2 id="start-heading" class="sr-only">Màn hình bắt đầu</h2>
+      
+      <!-- Card Cài đặt lượt chơi -->
+      <div class="glass-card setup-card">
+        <div class="card-header">
+          <div class="icon-circle">🎮</div>
+          <div>
+            <h3 class="card-title">Bắt Đầu Lượt Chơi</h3>
+            <p class="card-desc">Nhập tên của bạn và chọn chủ đề câu hỏi để tranh tài</p>
+          </div>
+        </div>
+
+        <div id="start-error" class="alert-box alert-error hidden" role="alert">
+          <span class="alert-icon">⚠️</span>
+          <span id="start-error-text" class="alert-msg">Vui lòng nhập tên</span>
+        </div>
+
+        <form id="form-start" class="start-form" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label for="player-name" class="form-label">
+              <span>Họ và tên người chơi</span>
+              <span class="required-star">*</span>
+            </label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input 
+                type="text" 
+                id="player-name" 
+                class="form-input" 
+                placeholder="Ví dụ: Nguyễn Văn An" 
+                maxlength="25"
+                autocomplete="off"
+              >
+            </div>
+            <span class="input-hint">Tối đa 20 ký tự</span>
+          </div>
+
+          <div class="form-group">
+            <label for="topic-select" class="form-label">Chủ đề ôn tập</label>
+            <div class="select-wrapper">
+              <span class="input-icon">📚</span>
+              <select id="topic-select" class="form-select">
+                <option value="all">🌟 Tất cả chủ đề (Ngẫu nhiên)</option>
+                <option value="Biến">📦 Biến (Variable & Scope)</option>
+                <option value="Mảng">📑 Mảng (Array & Methods)</option>
+                <option value="Hàm">⚙️ Hàm (Function & Scope)</option>
+                <option value="DOM">🌐 DOM (Document Object Model)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rules-summary">
+            <div class="rule-chip">⏱️ <strong>15 giây</strong> / câu</div>
+            <div class="rule-chip">🎯 <strong>1 điểm</strong> / câu đúng</div>
+            <div class="rule-chip">🏆 Lưu <strong>Top 5</strong> điểm cao</div>
+          </div>
+
+          <button type="button" id="btn-start" class="btn btn-primary btn-block">
+            <span>Bắt Đầu Làm Bài</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Card Bảng xếp hạng -->
+      <div class="glass-card leaderboard-card">
+        <div class="card-header leaderboard-header">
+          <div class="title-with-badge">
+            <div class="icon-circle gold">🏆</div>
+            <div>
+              <h3 class="card-title">Bảng Xếp Hạng Top 5</h3>
+              <p class="card-desc">Vinh danh các thành viên có điểm số cao nhất</p>
+            </div>
+          </div>
+          <button type="button" id="btn-clear-scores" class="btn btn-danger-ghost btn-sm" title="Xóa toàn bộ kết quả bảng xếp hạng">
+            <span>🗑️ Xóa bảng xếp hạng</span>
+          </button>
+        </div>
+
+        <div id="leaderboard-content" class="leaderboard-body">
+          <!-- Bảng xếp hạng sẽ render động tại đây -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MÀN HÌNH CÂU HỎI -->
+    <section id="screen-question" class="screen-view" aria-labelledby="question-heading">
+      <h2 id="question-heading" class="sr-only">Màn hình câu hỏi trắc nghiệm</h2>
+
+      <div class="glass-card quiz-card">
+        <!-- Header câu hỏi: Số câu, Chủ đề, Đồng hồ -->
+        <div class="quiz-status-header">
+          <div class="status-left">
+            <span id="question-counter" class="badge badge-counter">Câu 1/12</span>
+            <span id="question-topic-badge" class="badge badge-topic">Biến</span>
+          </div>
+          <div id="timer-box" class="timer-box" aria-live="polite">
+            <span class="timer-icon">⏳</span>
+            <span class="timer-label">Còn lại:</span>
+            <span id="timer-number" class="timer-value">15</span>
+            <span class="timer-unit">giây</span>
+          </div>
+        </div>
+
+        <!-- Thanh tiến độ bài thi -->
+        <div class="progress-container" aria-label="Tiến độ làm bài">
+          <div id="progress-bar-fill" class="progress-bar" style="width: 8.33%;"></div>
+        </div>
+
+        <!-- Nội dung câu hỏi -->
+        <div class="question-body">
+          <h3 id="question-text" class="question-content">
+            <!-- Nội dung câu hỏi nạp động qua JavaScript -->
+          </h3>
+        </div>
+
+        <!-- Danh sách 4 lựa chọn A, B, C, D -->
+        <div id="options-container" class="options-grid" role="radiogroup" aria-label="Các phương án lựa chọn">
+          <!-- Render động 4 nút lựa chọn bằng vòng lặp -->
+        </div>
+
+        <!-- Feedback thông báo ngay khi chọn/hết giờ -->
+        <div id="answer-feedback" class="answer-feedback hidden"></div>
+
+        <!-- Hàng nút điều khiển chuyển câu -->
+        <div class="quiz-footer">
+          <button type="button" id="btn-next" class="btn btn-primary btn-next hidden">
+            <span id="btn-next-text">Câu tiếp theo</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MÀN HÌNH KẾT QUẢ -->
+    <section id="screen-result" class="screen-view" aria-labelledby="result-heading">
+      <h2 id="result-heading" class="sr-only">Màn hình kết quả làm bài</h2>
+
+      <div class="glass-card result-card">
+        <!-- Vùng biểu tượng & Điểm số tổng kết -->
+        <div class="result-hero">
+          <div id="result-badge-icon" class="result-badge-icon">🎉</div>
+          <h3 class="result-player-title">Hoàn thành bài thi!</h3>
+          <p id="result-player-name" class="result-player-subtitle">Thí sinh: <strong>Nguyễn Văn An</strong></p>
+          
+          <div class="score-display-box">
+            <div id="result-score" class="score-main">8/10 (80%)</div>
+            <div id="result-remark" class="score-remark remark-excellent">Xuất sắc!</div>
+          </div>
+
+          <div id="result-leaderboard-notice" class="leaderboard-notice hidden">
+            ✨ Chúc mừng bạn đã lọt vào <strong>Top 5 Bảng Xếp Hạng</strong>!
+          </div>
+          <div id="result-retry-notice" class="retry-notice hidden">
+            ℹ️ <em>Lưu ý: Lượt làm lại câu sai nhằm ôn tập, kết quả không lưu vào bảng xếp hạng.</em>
+          </div>
+        </div>
+
+        <!-- Hàng nút hành động -->
+        <div class="result-actions">
+          <button type="button" id="btn-retry-wrong" class="btn btn-warning">
+            <span>🔄 Làm lại câu sai (<span id="wrong-count-badge">0</span>)</span>
+          </button>
+          <button type="button" id="btn-back-home" class="btn btn-outline">
+            <span>🏠 Về trang đầu</span>
+          </button>
+        </div>
+
+        <!-- Danh sách chi tiết câu trả lời sai (nếu có) -->
+        <div id="wrong-answers-section" class="wrong-answers-section">
+          <div class="section-divider">
+            <span>📝 ĐÁNH GIÁ CHI TIẾT CÂU SAI</span>
+          </div>
+          <div id="wrong-answers-list" class="wrong-answers-list">
+            <!-- Render danh sách câu sai động -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer bản quyền -->
+    <footer class="app-footer">
+      <p>© 2026 CLB Lập Trình • Bài Luyện Tập Kỹ Năng JavaScript 04 (AI-Driven)</p>
+      <p class="author-credits">Thực hiện: <strong>Trần Lê Chí Vỹ</strong> • Lớp: <strong>AI-SDLC-PTHB260930</strong></p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
